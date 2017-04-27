@@ -1,0 +1,7 @@
+completed:
+none
+
+to-do list:
+read in teapot file
+make room
+radiosity
