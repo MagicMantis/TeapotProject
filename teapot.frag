@@ -12,7 +12,7 @@ void main() {
 	float shininess = gl_FrontMaterial.shininess;
 
 	float pi = 3.14159265;
-	int light_count = 3; //how many lights to render
+	int light_count = 1; //how many lights to render
 
 	vec4 color = vec4(0.0,0.0,0.0,0.0);
 
@@ -29,11 +29,11 @@ void main() {
 		H = normalize(L+V);
 
 		//calculate diffuse color
-		vec4 dc = diffuse_color * gl_FrontLightProduct[i].diffuse * max(dot(N,L),0.0);
+		vec4 dc = diffuse_color * gl_LightSource[0].diffuse * max(dot(N,L),0.0);
 		clamp(diffuse_color, 0.0, 1.0);
 
 		//calculate the specular color
-		vec4 sc = specular_color * gl_FrontLightProduct[i].specular;
+		vec4 sc = specular_color * gl_LightSource[0].specular;
 		sc *= ((shininess+2.0)/(8.0*pi))*pow(max(dot(H,N),0.0),shininess);
 		clamp(specular_color, 0.0, 1.0);
 

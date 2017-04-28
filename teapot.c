@@ -34,7 +34,7 @@ void load_materials(char *mat_file) {
 	int x;
 	x = fscanf(fp, "%s %s", prefix, look);
 
-	float ambient[] = {0.0, 0.0, 0.0, 1.0};
+	float ambient[] = {0.0, 0.0, 0.0, 0.0};
 	float diffuse[] = {0.0, 0.0, 0.0, 1.0};
 	float specular[] = {0.0, 0.0, 0.0, 1.0};
 	float shininess[] = {0.0};
@@ -478,17 +478,16 @@ void subtract(float *a, float *b, float *c) {
 	a[2] = b[2] - c[2];
 }
 
-int rayIntersectsTriangle(float *p, float *d,
-			float *v0, float *v1, float *v2) {
+int intersection(float *p, float *d,
+			float *v0, float *v1, float *v2, float *out) {
 
-	float e1[3],e2[3],h[3],s[3],q[3];
+	float edge1[3],edge2[3],h[3],s[3],q[3];
 	float a,f,u,v;
-	subtract(e1,v1,v0);
-	subtract(e2,v2,v0);
+	subtract(edge1,v1,v0);
+	subtract(edge2,v2,v0);
 
-
-	crossProduct(h,d,e2);
-	a = innerProduct(e1,h);
+	crossProduct(h,d,edge2);
+	a = innerProduct(edge1,h);
 
 	if (a > -0.00001 && a < 0.00001) return(false);
 
@@ -500,23 +499,63 @@ int rayIntersectsTriangle(float *p, float *d,
 		return(false);
 	}
 
-	crossProduct(q,s,e1);
+	crossProduct(q,s,edge1);
 	v = f * innerProduct(d,q);
 
 	if (v < 0.0 || u + v > 1.0) {
 		return(false);
 	}
 
-	// at this stage we can compute t to find out where
-	// the intersection point is on the line
-	float t = f * innerProduct(e2,q);
+	//calc distance
+	float t = f * innerProduct(edge2,q);
 
-	if (t > 0.00001) // ray intersection
+	if (t > 0.00001) {
+		out[0] += p[0] + t * d[0];
+		out[1] += p[1] + t * d[1];
+		out[2] += p[2] + t * d[2];
+		crossProduct(&out[3], edge1, edge2);
+		if (innerProduct(&out[3], d) >= 0) {
+		 	out[3] *= -1;
+		 	out[4] *= -1;
+		 	out[5] *= -1;
+		}
 		return(true);
-
-	else // this means that there is a line intersection
-		// but not a ray intersection
+	}
+	else
 		return (false);
+}
+
+void draw_objs(struct point *light, struct point *bottom,struct point *top,struct point *back,struct point *front,
+		struct point *left,struct point *right) {
+	int i;
+	init_material(0);
+	glBegin(GL_QUADS);
+	glNormal3f(0.0,1.0,0.0);
+	for(i=0;i<4;i++) glVertex3f(light[i].x,light[i].y,light[i].z);
+	glNormal3f(0.0,1.0,0.0);
+	for(i=0;i<4;i++) glVertex3f(bottom[i].x,bottom[i].y,bottom[i].z);
+	glNormal3f(0.0,-1.0,0.0);
+	for(i=0;i<4;i++) glVertex3f(top[i].x,top[i].y,top[i].z);
+	glNormal3f(1.0,0.0,0.0);
+	for(i=0;i<4;i++) glVertex3f(front[i].x,front[i].y,front[i].z);
+	glNormal3f(-1.0,0.0,0.0);
+	for(i=0;i<4;i++) glVertex3f(back[i].x,back[i].y,back[i].z);
+	glEnd();
+	
+	init_material(1);
+	glBegin(GL_QUADS);
+	glNormal3f(0.0,0.0,1.0);
+	for(i=0;i<4;i++) glVertex3f(left[i].x,left[i].y,left[i].z);
+	glEnd();	
+	
+	init_material(3);
+	glDrawArrays(GL_QUADS,0,face_count*4);
+
+	init_material(2);
+	glBegin(GL_QUADS);
+	glNormal3f(0.0,0.0,-1.0);
+	for(i=0;i<4;i++) glVertex3f(right[i].x,right[i].y,right[i].z);
+	glEnd();
 }
 
 void render_scene()
@@ -546,9 +585,9 @@ void render_scene()
 	//coords for ground
 
 	int i, j;
-	const int iterations = 5;
+	const int iterations = 2;
 	for (j = 0; j < iterations; j++) {
-		init_material(0);
+
 		//generate a random point on area light
 		struct point p = {(float)rand()/(float)RAND_MAX*4.0 - 2.0, 13.0, (float)rand()/(float)RAND_MAX*4.0 - 2.0};
 		//generate a random normalized vector (facing downwards)
@@ -559,35 +598,59 @@ void render_scene()
 		angle.z /= dist;
 		int x;
 
-		glBegin(GL_QUADS);
-		glNormal3f(0.0,1.0,0.0);
-		for(i=0;i<4;i++) glVertex3f(light[i].x,light[i].y,light[i].z);
-		glNormal3f(0.0,1.0,0.0);
-		for(i=0;i<4;i++) glVertex3f(bottom[i].x,bottom[i].y,bottom[i].z);
-		glNormal3f(0.0,-1.0,0.0);
-		for(i=0;i<4;i++) glVertex3f(top[i].x,top[i].y,top[i].z);
-		glNormal3f(1.0,0.0,0.0);
-		for(i=0;i<4;i++) glVertex3f(front[i].x,front[i].y,front[i].z);
-		glNormal3f(-1.0,0.0,0.0);
-		for(i=0;i<4;i++) glVertex3f(back[i].x,back[i].y,back[i].z);
-		glEnd();
-		
-		init_material(1);
-		glBegin(GL_QUADS);
-		glNormal3f(0.0,0.0,1.0);
-		for(i=0;i<4;i++) glVertex3f(left[i].x,left[i].y,left[i].z);
-		glEnd();	
-		
-		init_material(3);
-		glDrawArrays(GL_QUADS,0,face_count*4);
+		//do initial light
+		float light_diffuse[] = { 0.60, 0.60, 0.60, 0.0 }; 
+		float light_specular[] = { 0.75, 0.75, 0.75, 0.0 }; 
+		float light_position[] = { p.x, p.y, p.z, 1.0 };
+		glLightfv(GL_LIGHT0,GL_POSITION,light_position); 
+		glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse); 
+		glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
 
-		init_material(2);
-		glBegin(GL_QUADS);
-		glNormal3f(0.0,0.0,-1.0);
-		for(i=0;i<4;i++) glVertex3f(right[i].x,right[i].y,right[i].z);
-		glEnd();
+		const int bounces = 2;
+		draw_objs(light,bottom,top,back,front,left,right);
+		glAccum(GL_ACCUM,1.0/(float)(bounces*iterations)); 
+
+		//do bounces
+		for (int i = 1; i < bounces; i++) {
+			int k = 0;
+			float out[6];
+			while (!intersection(&p, &angle, &tris[k*3], &tris[k*3+1], &tris[k*3+2],out)) k++;
+			if (k < 8) {
+				float mat_diffuse[] = {0.8,0.8,0.8,1.0}; 
+				float mat_specular[] = {0.15,0.15,0.15,1.0};
+				glLightfv(GL_LIGHT0,GL_DIFFUSE,mat_diffuse); 
+				glLightfv(GL_LIGHT0,GL_SPECULAR,mat_specular);
+			}
+			else if (k < 10) {
+				float mat_diffuse[] = {0.8,0.0,0.0,1.0}; 
+				float mat_specular[] = {0.15,0.15,0.15,1.0};
+				glLightfv(GL_LIGHT0,GL_DIFFUSE,mat_diffuse); 
+				glLightfv(GL_LIGHT0,GL_SPECULAR,mat_specular);
+			}
+			else {
+				float mat_diffuse[] = {0.0,0.8,0.0,1.0}; 
+				float mat_specular[] = {0.15,0.15,0.15,1.0};
+				glLightfv(GL_LIGHT0,GL_DIFFUSE,mat_diffuse); 
+				glLightfv(GL_LIGHT0,GL_SPECULAR,mat_specular);
+			}
+			glLightfv(GL_LIGHT0,GL_POSITION,out);
+			draw_objs(light,bottom,top,back,front,left,right);
+			glAccum(GL_ACCUM,1.0/(float)(bounces*iterations));
+			p.x = out[0];
+			p.y = out[1];
+			p.z = out[2];
+
+			float tmp[3];
+			tmp[0] = angle.x - 2*(innerProduct(&angle, &out[3])) * out[3];
+			tmp[1] = angle.y - 2*(innerProduct(&angle, &out[3])) * out[4];
+			tmp[2] = angle.z - 2*(innerProduct(&angle, &out[3])) * out[5];
+			angle.x = tmp[0];
+			angle.y = tmp[1];
+			angle.z = tmp[2];
+		}
 	}
 	
+	glAccum(GL_RETURN, 1.0);
 	glutSwapBuffers();
 }
 
@@ -607,7 +670,7 @@ int main(int argc, char **argv)
 	read_object_file("teapot.obj");
 
 	glutInit(&argc,argv);
-	glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH|GLUT_MULTISAMPLE|GL_ACCUM);
+	glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH|GLUT_MULTISAMPLE|GLUT_ACCUM);
 	glutInitWindowSize(1280,1024);
 	glutInitWindowPosition(300,0);
 	glutCreateWindow("Project 3");
