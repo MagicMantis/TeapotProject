@@ -1,3 +1,6 @@
+#define GL_GLEXT_PROTOTYPES 1
+#define GL3_PROTOTYPES 1
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
@@ -9,6 +12,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define PI 3.14159265
 
@@ -40,11 +44,6 @@ void load_materials(char *mat_file) {
 	x = fscanf(fp, "%s %f %f %f", prefix, &specular[0], &specular[1], &specular[2]);
 	x = fscanf(fp, "%s %f", prefix, &shininess[0]);
 
-	printf("%f %f %f %f\n", ambient[0], ambient[1], ambient[2], ambient[3]);
-	printf("%f %f %f %f\n", diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
-	printf("%f %f %f %f\n", specular[0], specular[1], specular[2], specular[3]);
-	printf("%f\n", shininess[0]);
-
 	glMaterialfv(GL_FRONT,GL_AMBIENT,ambient);
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,diffuse);
 	glMaterialfv(GL_FRONT,GL_SPECULAR,specular);
@@ -67,7 +66,7 @@ void read_object_file(char* fileName) {
 	char material_file[100];
 	int i, x;
 	x = fscanf(fp, "%s %s", prefix, material_file);
-	load_materials(material_file);
+	//load_materials(material_file);
 	
 	//read in vertexes
 	int vertex_count = 0;
@@ -276,12 +275,12 @@ void setup_viewvolume()
 	struct point eye, view, up;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45.0,1.0,0.1,20.0);
+	gluPerspective(90.0,1280.0/1024.0,3,30.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	eye.x = -4; eye.y = 3; eye.z = 1;
-	view.x = 0; view.y = 0.3; view.z = 0.0;
+	eye.x = -9.5; eye.y = 7; eye.z = 0;
+	view.x = 0; view.y = 7; view.z = 0.0;
 	up.x = 0.0; up.y = 1.0; up.z = 0.0;
 	gluLookAt(eye.x,eye.y,eye.z,view.x,view.y,view.z,up.x,up.y,up.z);
 }
@@ -316,12 +315,12 @@ void init_lights()
 	float light0_position[] = { light0.x, light0.y, light0.z, 1.0 };
 
 	//fill light
-	float light1_diffuse[] = { 0.55, 0.55, 0.4, 0.0 }; 
+	float light1_diffuse[] = { 0.55, 0.55, 0.55, 0.0 }; 
 	float light1_specular[] = { 0.7, 0.7, 0.7, 0.0 }; 
 	float light1_position[] = { light1.x, light1.y, light1.z, 1.0 };
 
 	//back light
-	float light2_diffuse[] = { 0.2, 0.2, 0.9, 0.0 }; 
+	float light2_diffuse[] = { 0.9, 0.9, 0.9, 0.0 }; 
 	float light2_specular[] = { 1.25, 1.25, 1.25, 0.0 }; 
 	float light2_position[] = { light2.x, light2.y, light2.z, 1.0 };
 	
@@ -344,8 +343,8 @@ void init_lights()
 void init_material(int mat)
 {
 	if (mat == 0) {
-		float mat_ambient[] = {0.0,0.0,0.0,0.0}; 
-		float mat_diffuse[] = {0.8,0.8,0.7,1.0}; 
+		float mat_ambient[] = {0.0,0.0,0.0,1.0}; 
+		float mat_diffuse[] = {0.8,0.8,0.8,1.0}; 
 		float mat_specular[] = {0.15,0.15,0.15,1.0};
 		float mat_shininess[] = {60.0}; 
 
@@ -354,9 +353,9 @@ void init_material(int mat)
 		glMaterialfv(GL_FRONT,GL_SPECULAR,mat_specular);
 		glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
 	}
-	if (mat == 1) {
-		float mat_ambient[] = {0.0,0.0,0.0,0.0}; 
-		float mat_diffuse[] = {1.0,0.8,0.7,1.0}; 
+	else if (mat == 1) {
+		float mat_ambient[] = {0.0,0.0,0.0,1.0}; 
+		float mat_diffuse[] = {0.8,0.0,0.0,0.0}; 
 		float mat_specular[] = {0.15,0.15,0.15,1.0};
 		float mat_shininess[] = {60.0}; 
 		
@@ -366,9 +365,9 @@ void init_material(int mat)
 		glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
 
 	}
-	if (mat == 2) {
-		float mat_ambient[] = {0.0,0.0,0.0,0.0}; 
-		float mat_diffuse[] = {1.0,0.8,0.7,1.0}; 
+	else if (mat == 2) {
+		float mat_ambient[] = {0.0,0.0,0.0,1.0}; 
+		float mat_diffuse[] = {0.0,0.8,0.0,1.0}; 
 		float mat_specular[] = {0.15,0.15,0.15,1.0};
 		float mat_shininess[] = {60.0}; 
 		
@@ -376,13 +375,17 @@ void init_material(int mat)
 		glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_diffuse);
 		glMaterialfv(GL_FRONT,GL_SPECULAR,mat_specular);
 		glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
-
 	}
-	if (mat == 3) {
-		float mat_ambient[] = {0.0,0.0,0.0,0.0}; 
+	else if (mat == 3) {
+		float mat_ambient[] = {0.0,0.0,0.0,1.0}; 
 		float mat_diffuse[] = {1.0,0.8,0.7,1.0}; 
 		float mat_specular[] = {0.15,0.15,0.15,1.0};
 		float mat_shininess[] = {60.0}; 
+
+		glMaterialfv(GL_FRONT,GL_AMBIENT,mat_ambient);
+		glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_diffuse);
+		glMaterialfv(GL_FRONT,GL_SPECULAR,mat_specular);
+		glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
 	}
 
 }
@@ -458,21 +461,133 @@ void init_objects() {
 	free(final_normal);
 }
 
+float innerProduct (float *a, float *b) {
+	float dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+	return dot;
+}
+
+void crossProduct (float *c, float *a, float *b) {
+	c[0] = a[1]*b[2] - a[2]*b[1];
+	c[1] = a[2]*b[0] - a[0]*b[2];
+	c[2] = a[0]*b[1] - a[1]*b[0];
+}
+
+void subtract(float *a, float *b, float *c) {
+	a[0] = b[0] - c[0];
+	a[1] = b[1] - c[1];
+	a[2] = b[2] - c[2];
+}
+
+int rayIntersectsTriangle(float *p, float *d,
+			float *v0, float *v1, float *v2) {
+
+	float e1[3],e2[3],h[3],s[3],q[3];
+	float a,f,u,v;
+	subtract(e1,v1,v0);
+	subtract(e2,v2,v0);
+
+
+	crossProduct(h,d,e2);
+	a = innerProduct(e1,h);
+
+	if (a > -0.00001 && a < 0.00001) return(false);
+
+	f = 1/a;
+	subtract(s,p,v0);
+	u = f * (innerProduct(s,h));
+
+	if (u < 0.0 || u > 1.0) {
+		return(false);
+	}
+
+	crossProduct(q,s,e1);
+	v = f * innerProduct(d,q);
+
+	if (v < 0.0 || u + v > 1.0) {
+		return(false);
+	}
+
+	// at this stage we can compute t to find out where
+	// the intersection point is on the line
+	float t = f * innerProduct(e2,q);
+
+	if (t > 0.00001) // ray intersection
+		return(true);
+
+	else // this means that there is a line intersection
+		// but not a ray intersection
+		return (false);
+}
+
 void render_scene()
 {
+	static struct point light[4]={{-2,13.0,-2},{-2,13.0,2},{2,13.0,2},{2,13.0,-2}};
+	static struct point bottom[4]={{-7,0.0,-7},{-7,0.0,7},{7,0.0,7},{7,0.0,-7}};
+	static struct point top[4]={{-7,14.0,-7},{-7,14.0,7},{7,14.0,7},{7,14.0,-7}};
+	static struct point back[4]={{7,14.0,-7},{7,14.0,7},{7,0.0,7},{7,0.0,-7}};
+	static struct point front[4]={{-7,14.0,-7},{-7,14.0,7},{-7,0.0,7},{-7,0.0,-7}};
+	static struct point left[4]={{-7,0.0,-7},{-7,14.0,-7},{7,14.0,-7},{7,0.0,-7}};
+	static struct point right[4]={{-7,0.0,7},{-7,14.0,7},{7,14.0,7},{7,0.0,7}};
+
+	static struct point tris[36] = {
+		{-7,0.0,-7},{-7,0.0,7},{7,0.0,7},{-7,0.0,-7},{7,0.0,7},{7,0.0,-7},
+		{-7,14.0,-7},{-7,14.0,7},{7,14.0,7},{-7,14.0,-7},{7,14.0,7},{7,14.0,-7},
+		{7,14.0,-7},{7,14.0,7},{7,0.0,7},{7,14.0,-7},{7,0.0,7},{7,0.0,-7},
+		{-7,14.0,-7},{-7,14.0,7},{-7,0.0,7},{-7,14.0,-7},{-7,0.0,7},{-7,0.0,-7},
+		{-7,0.0,-7},{-7,14.0,-7},{7,14.0,-7},{-7,0.0,-7},{7,14.0,-7},{7,0.0,-7},
+		{-7,0.0,7},{-7,14.0,7},{7,14.0,7},{-7,0.0,7},{7,14.0,7},{7,0.0,7}
+	};
+
+	static struct point norms[6] = {
+		{0.0,1.0,0.0}, {0.0,-1.0,0.0}, {-1.0,0.0,0.0}, {1.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,-1.0}
+	};
+
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);	
 	//coords for ground
 
-	init_material(0);
-	struct point bottom[4]={{-4,0.0,-4},{-4,0.0,4},{4,0.0,4},{4,0.0,-4}};
-	glBegin(GL_QUADS);
-	glNormal3f(0.0,1.0,0.0);
-	int i;
-	for(i=0;i<4;i++) glVertex3f(bottom[i].x,bottom[i].y,bottom[i].z);
-	glEnd();
+	int i, j;
+	const int iterations = 5;
+	for (j = 0; j < iterations; j++) {
+		init_material(0);
+		//generate a random point on area light
+		struct point p = {(float)rand()/(float)RAND_MAX*4.0 - 2.0, 13.0, (float)rand()/(float)RAND_MAX*4.0 - 2.0};
+		//generate a random normalized vector (facing downwards)
+		struct point angle = {(float)rand()/(float)RAND_MAX*2.0-1.0,-(float)rand()/(float)RAND_MAX,(float)rand()/(float)RAND_MAX*2.0-1.0};
+		float dist = sqrt(angle.x*angle.x + angle.y*angle.y + angle.z*angle.z);
+		angle.x /= dist;
+		angle.y /= dist;
+		angle.z /= dist;
+		int x;
 
-	init_material(4);
-	glDrawArrays(GL_QUADS,0,face_count*4);
+		glBegin(GL_QUADS);
+		glNormal3f(0.0,1.0,0.0);
+		for(i=0;i<4;i++) glVertex3f(light[i].x,light[i].y,light[i].z);
+		glNormal3f(0.0,1.0,0.0);
+		for(i=0;i<4;i++) glVertex3f(bottom[i].x,bottom[i].y,bottom[i].z);
+		glNormal3f(0.0,-1.0,0.0);
+		for(i=0;i<4;i++) glVertex3f(top[i].x,top[i].y,top[i].z);
+		glNormal3f(1.0,0.0,0.0);
+		for(i=0;i<4;i++) glVertex3f(front[i].x,front[i].y,front[i].z);
+		glNormal3f(-1.0,0.0,0.0);
+		for(i=0;i<4;i++) glVertex3f(back[i].x,back[i].y,back[i].z);
+		glEnd();
+		
+		init_material(1);
+		glBegin(GL_QUADS);
+		glNormal3f(0.0,0.0,1.0);
+		for(i=0;i<4;i++) glVertex3f(left[i].x,left[i].y,left[i].z);
+		glEnd();	
+		
+		init_material(3);
+		glDrawArrays(GL_QUADS,0,face_count*4);
+
+		init_material(2);
+		glBegin(GL_QUADS);
+		glNormal3f(0.0,0.0,-1.0);
+		for(i=0;i<4;i++) glVertex3f(right[i].x,right[i].y,right[i].z);
+		glEnd();
+	}
+	
 	glutSwapBuffers();
 }
 
@@ -492,16 +607,18 @@ int main(int argc, char **argv)
 	read_object_file("teapot.obj");
 
 	glutInit(&argc,argv);
-	glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH|GLUT_MULTISAMPLE);
-	glutInitWindowSize(768,768);
-	glutInitWindowPosition(100,100);
+	glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH|GLUT_MULTISAMPLE|GL_ACCUM);
+	glutInitWindowSize(1280,1024);
+	glutInitWindowPosition(300,0);
 	glutCreateWindow("Project 3");
 	glClearColor(0.25,0.25,0.25,0.0);
+	glClearAccum(0.0,0.0,0.0,0.0);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE_ARB);
+	glEnable(GL_ACCUM);
 
 	setup_viewvolume();
-	init_lights();
+	//init_lights();
 	init_shaders();
 	init_objects();
 

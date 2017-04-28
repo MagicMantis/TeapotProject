@@ -41,6 +41,5 @@ void main() {
 	}
 			
 	//return final calculated color
-	float cl = color.x;
-	gl_FragColor = vec4(color.x,color.y,color.z/2.0,color.w);
+	gl_FragColor = vec4(color.x,color.y,color.z,color.w);
 }
